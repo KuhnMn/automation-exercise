@@ -1,0 +1,57 @@
+name: combined-workflow
+on: [push]
+jobs:
+  style_check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: "Install python"
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: "Install black"
+        run: pip install black
+      - name: "Check style with black"
+        run: black --check
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: "Install python"
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: "Install requirements"
+        run: pip install -r requirements.txt
+      - name: "Run coverage with pytest"
+        run:  coverage run -m pytest
+      - name: "Upload coverage artifact"
+        uses: actions/upload-artifact@v2
+        with:
+          name: pytest_coverage
+          path: .converage
+          retention-days: 1
+  coverage_report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: "Setup python"
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: "Download coverage artifact"
+        uses: actions/download-artifact@v2
+        with:
+          name: pytest_coverage
+      - name: "Install coverage"
+        run: pip install coverage
+      - name: "Create coverage report"
+        run: |
+          coverage report
+          coverage xml
+      - name: "Upload xml artifact"
+        uses: actions/upload-artifact@v2
+        with:
+          name: xml_coverage
+          path: coverage.xml
+          retention-days: 14
